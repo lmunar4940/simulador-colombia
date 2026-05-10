@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador Jurídico Colombia — Aula Jurídica Interactiva</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8D5A0;
+    --gold-dark: #8B6914;
+    --ink: #1A1611;
+    --ink-mid: #3D3526;
+    --ink-light: #6B5F45;
+    --parchment: #F5F0E8;
+    --parchment-dark: #EDE5D0;
+    --parchment-mid: #F0E8D5;
+    --red-law: #8B1A1A;
+    --green-law: #1A4A2E;
+    --blue-law: #1A2E4A;
+    --yellow-col: #FCD116;
+    --blue-col: #003893;
+    --red-col: #CE1126;
+    --border: #C9A84C55;
+    --shadow: rgba(26,22,17,0.15);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    min-height: 100vh;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, #C9A84C18 39px, #C9A84C18 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, #C9A84C10 39px, #C9A84C10 40px);
+    background-color: #1A1611;
+  }
+
+  .screen { display:none; min-height:100vh; }
+  .screen.active { display:flex; flex-direction:column; }
+
+  /* ─── LOGIN ─── */
+  #screen-login { align-items:center; justify-content:center; padding:2rem; }
+
+  .login-card {
+    background: var(--parchment);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 0 60px rgba(201,168,76,0.2);
+    position: relative;
+  }
+
+  .login-card::before {
+    content:'';
+    position:absolute;
+    top:8px; left:8px; right:8px; bottom:8px;
+    border:1px solid var(--gold-light);
+    border-radius:2px;
+    pointer-events:none;
+  }
+
+  /* Bandera Colombia */
+  .bandera {
+    display: flex;
+    height: 8px;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1.2rem;
+  }
+  .bandera div:nth-child(1) { flex: 2; background: var(--yellow-col); }
+  .bandera div:nth-child(2) { flex: 1; background: var(--blue-col); }
+  .bandera div:nth-child(3) { flex: 1; background: var(--red-col); }
+
+  .escudo { text-align:center; font-size:3rem; margin-bottom:0.5rem; }
+
+  .login-title {
+    font-family:'Playfair Display',serif;
+    font-size:1.5rem;
+    font-weight:700;
+    color:var(--ink);
+    text-align:center;
+    margin-bottom:0.25rem;
+  }
+
+  .login-sub {
+    font-size:0.82rem;
+    color:var(--ink-light);
+    text-align:center;
+    margin-bottom:0.4rem;
+    font-style:italic;
+  }
+
+  .login-pais {
+    font-size:0.78rem;
+    color:var(--blue-col);
+    text-align:center;
+    font-weight:600;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    margin-bottom:1.5rem;
+  }
+
+  .divider-gold { height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:1rem 0 1.5rem; }
+
+  .form-group { margin-bottom:1.2rem; }
+  .form-group label { display:block; font-size:0.75rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-light); margin-bottom:0.4rem; }
+  .form-group input, .form-group select { width:100%; padding:0.65rem 0.9rem; background:white; border:1.5px solid var(--gold-light); border-radius:2px; font-family:'Source Serif 4',serif; font-size:0.95rem; color:var(--ink); transition:border-color 0.2s; outline:none; }
+  .form-group input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,0.15); }
+
+  .btn-primary { width:100%; padding:0.8rem; background:var(--ink); color:var(--gold); border:1.5px solid var(--gold); border-radius:2px; font-family:'Playfair Display',serif; font-size:1rem; font-weight:600; letter-spacing:0.08em; cursor:pointer; transition:all 0.2s; margin-top:0.5rem; }
+  .btn-primary:hover { background:var(--gold); color:var(--ink); }
+  .btn-secondary { width:100%; padding:0.65rem; background:transparent; color:var(--ink-light); border:1px solid var(--border); border-radius:2px; font-family:'Source Serif 4',serif; font-size:0.85rem; cursor:pointer; margin-top:0.5rem; transition:all 0.2s; }
+  .btn-secondary:hover { background:var(--parchment-dark); }
+  .error-msg { color:var(--red-law); font-size:0.8rem; text-align:center; margin-top:0.75rem; display:none; }
+
+  /* ─── TOP BAR ─── */
+  .top-bar { background:var(--ink); color:var(--gold); padding:0.9rem 2rem; display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid var(--gold); flex-shrink:0; }
+  .top-bar-title { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:600; }
+  .top-bar-user { font-size:0.8rem; color:var(--gold-light); font-style:italic; }
+  .btn-logout { background:transparent; border:1px solid var(--gold-dark); color:var(--gold-light); padding:0.3rem 0.8rem; border-radius:2px; cursor:pointer; font-size:0.75rem; font-family:'Source Serif 4',serif; transition:all 0.2s; }
+  .btn-logout:hover { border-color:var(--gold); color:var(--gold); }
+
+  /* ─── CASOS ─── */
+  #screen-casos { background:var(--parchment); }
+  .casos-header { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; color:var(--ink); margin:2rem 0 0.5rem; text-align:center; }
+  .casos-sub { text-align:center; color:var(--ink-light); font-style:italic; margin-bottom:2rem; font-size:0.9rem; }
+
+  .casos-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem; max-width:1100px; margin:0 auto; padding:0 2rem 2rem; }
+
+  .caso-card { background:white; border:1.5px solid var(--gold-light); border-radius:4px; padding:1.5rem; cursor:pointer; transition:all 0.25s; position:relative; overflow:hidden; }
+  .caso-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--gold); transform:scaleX(0); transform-origin:left; transition:transform 0.25s; }
+  .caso-card:hover { border-color:var(--gold); box-shadow:0 4px 20px var(--shadow); transform:translateY(-2px); }
+  .caso-card:hover::after { transform:scaleX(1); }
+
+  .caso-badge { display:inline-block; font-size:0.68rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; padding:0.2rem 0.6rem; border-radius:2px; margin-bottom:0.8rem; }
+  .badge-civil { background:#E3F2FD; color:#1A2E4A; }
+  .badge-penal { background:#FFEBEE; color:#8B1A1A; }
+  .badge-restaurativa { background:#E8F5E9; color:#1A4A2E; }
+
+  .caso-numero { font-family:'Playfair Display',serif; font-size:0.75rem; color:var(--gold-dark); margin-bottom:0.4rem; letter-spacing:0.05em; }
+  .caso-titulo { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; color:var(--ink); margin-bottom:0.6rem; line-height:1.3; }
+  .caso-desc { font-size:0.83rem; color:var(--ink-light); line-height:1.6; margin-bottom:1rem; }
+  .caso-meta { display:flex; gap:1rem; font-size:0.75rem; color:var(--ink-light); border-top:1px solid var(--border); padding-top:0.8rem; }
+
+  /* ─── JUICIO ─── */
+  #screen-juicio { background:var(--parchment); flex-direction:column; }
+  .juicio-layout { display:grid; grid-template-columns:300px 1fr; flex:1; min-height:0; max-height:calc(100vh - 56px); }
+  .expediente-panel { background:var(--parchment-mid); border-right:1.5px solid var(--border); overflow-y:auto; padding:1.5rem 1.2rem; }
+  .exp-title { font-family:'Playfair Display',serif; font-size:0.8rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-dark); border-bottom:1px solid var(--border); padding-bottom:0.4rem; margin-bottom:0.8rem; }
+  .exp-section { margin-bottom:1.5rem; }
+  .exp-body { font-size:0.8rem; line-height:1.7; color:var(--ink-mid); }
+  .exp-body strong { color:var(--ink); font-weight:600; }
+  .prueba-item { background:white; border:1px solid var(--border); border-radius:2px; padding:0.5rem 0.7rem; margin-bottom:0.5rem; font-size:0.78rem; color:var(--ink-mid); cursor:pointer; transition:background 0.15s; }
+  .prueba-item:hover { background:var(--parchment); }
+  .prueba-item .prueba-label { font-weight:600; color:var(--ink); }
+  .jurisprudencia-item { background:white; border-left:3px solid var(--blue-col); padding:0.5rem 0.7rem; margin-bottom:0.6rem; font-size:0.77rem; line-height:1.5; color:var(--ink-mid); }
+  .jurisprudencia-item .juris-ref { font-family:'Playfair Display',serif; font-weight:700; color:var(--blue-col); font-size:0.75rem; }
+
+  .juicio-main { display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .fase-bar { background:white; border-bottom:1.5px solid var(--border); padding:0.6rem 1.5rem; display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; flex-shrink:0; }
+  .fase-step { font-size:0.72rem; padding:0.25rem 0.7rem; border-radius:20px; border:1px solid var(--border); color:var(--ink-light); background:white; font-weight:600; letter-spacing:0.05em; white-space:nowrap; }
+  .fase-step.active { background:var(--ink); color:var(--gold); border-color:var(--ink); }
+  .fase-step.done { background:var(--parchment-dark); color:var(--ink-mid); }
+  .score-display { margin-left:auto; font-family:'Playfair Display',serif; font-size:0.85rem; color:var(--gold-dark); font-weight:600; white-space:nowrap; }
+
+  .chat-area { flex:1; overflow-y:auto; padding:1.5rem; display:flex; flex-direction:column; gap:1rem; }
+
+  .msg { max-width:88%; padding:0.9rem 1.2rem; border-radius:4px; font-size:0.87rem; line-height:1.7; }
+  .msg-juez { background:var(--ink); color:var(--gold-light); border-left:3px solid var(--gold); align-self:flex-start; }
+  .msg-juez .msg-role { font-family:'Playfair Display',serif; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); margin-bottom:0.4rem; }
+  .msg-contraria { background:#3D2626; color:#F5D5D5; border-left:3px solid var(--red-col); align-self:flex-start; }
+  .msg-contraria .msg-role { font-family:'Playfair Display',serif; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:#FF9999; margin-bottom:0.4rem; }
+  .msg-alumno { background:white; border:1.5px solid var(--gold-light); border-right:3px solid var(--gold); align-self:flex-end; color:var(--ink); }
+  .msg-alumno .msg-role { font-family:'Playfair Display',serif; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold-dark); margin-bottom:0.4rem; }
+  .msg-sistema { background:#EAF3EA; border:1px solid #B8D4B8; color:var(--green-law); align-self:center; text-align:center; font-size:0.8rem; font-style:italic; border-radius:20px; padding:0.4rem 1.2rem; max-width:70%; }
+  .msg-evaluacion { background:#FFF8E1; border:1.5px solid #C9A84C; color:var(--ink); align-self:flex-start; max-width:90%; }
+  .msg-evaluacion .msg-role { color:var(--gold-dark); font-family:'Playfair Display',serif; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:0.4rem; }
+  .puntuacion-inline { display:inline-block; background:var(--gold); color:var(--ink); font-weight:700; font-size:0.8rem; padding:0.1rem 0.5rem; border-radius:3px; margin-left:0.5rem; }
+
+  .input-area { background:white; border-top:1.5px solid var(--border); padding:1rem 1.5rem; display:flex; gap:0.7rem; align-items:flex-end; flex-shrink:0; }
+  .input-area textarea { flex:1; padding:0.7rem 1rem; border:1.5px solid var(--gold-light); border-radius:3px; font-family:'Source Serif 4',serif; font-size:0.87rem; color:var(--ink); resize:none; outline:none; min-height:70px; max-height:150px; transition:border-color 0.2s; background:var(--parchment); }
+  .input-area textarea:focus { border-color:var(--gold); }
+  .btn-enviar { padding:0.7rem 1.4rem; background:var(--ink); color:var(--gold); border:1.5px solid var(--gold); border-radius:3px; font-family:'Playfair Display',serif; font-weight:600; font-size:0.9rem; cursor:pointer; transition:all 0.2s; white-space:nowrap; align-self:flex-end; height:70px; }
+  .btn-enviar:hover { background:var(--gold); color:var(--ink); }
+  .btn-enviar:disabled { opacity:0.5; cursor:not-allowed; }
+  .btn-fase { padding:0.5rem 1rem; background:transparent; color:var(--green-law); border:1px solid var(--green-law); border-radius:2px; font-family:'Source Serif 4',serif; font-size:0.8rem; cursor:pointer; transition:all 0.2s; white-space:nowrap; align-self:flex-end; }
+  .btn-fase:hover { background:var(--green-law); color:white; }
+
+  /* ─── INFORME ─── */
+  #screen-informe { background:var(--parchment); flex-direction:column; }
+  .informe-content { max-width:800px; margin:2rem auto; padding:2rem; background:white; border:1.5px solid var(--gold-light); border-radius:4px; }
+  .informe-header { text-align:center; margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:2px solid var(--gold); }
+  .informe-titulo { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; color:var(--ink); margin-bottom:0.5rem; }
+  .informe-meta { font-size:0.85rem; color:var(--ink-light); font-style:italic; }
+  .informe-section { margin-bottom:1.8rem; }
+  .informe-section-title { font-family:'Playfair Display',serif; font-size:0.8rem; font-weight:700; color:var(--gold-dark); border-bottom:1px solid var(--border); padding-bottom:0.4rem; margin-bottom:1rem; letter-spacing:0.05em; text-transform:uppercase; }
+  .score-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:1rem; margin-bottom:1rem; }
+  .score-card { background:var(--parchment); border:1px solid var(--border); border-radius:3px; padding:0.8rem; text-align:center; }
+  .score-card .label { font-size:0.72rem; color:var(--ink-light); text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:0.4rem; }
+  .score-card .value { font-family:'Playfair Display',serif; font-size:1.8rem; font-weight:700; color:var(--ink); }
+  .score-card .max { font-size:0.8rem; color:var(--ink-light); }
+  .transcript-item { border-left:3px solid var(--border); padding:0.5rem 0.8rem; margin-bottom:0.6rem; font-size:0.8rem; line-height:1.6; color:var(--ink-mid); }
+  .transcript-item .role-tag { font-weight:700; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; margin-right:0.5rem; }
+  .tag-juez { color:var(--ink); }
+  .tag-alumno { color:var(--gold-dark); }
+  .tag-contraria { color:var(--red-col); }
+  .tag-eval { color:var(--green-law); }
+  .btn-print { background:var(--ink); color:var(--gold); border:1.5px solid var(--gold); padding:0.8rem 2rem; font-family:'Playfair Display',serif; font-size:1rem; font-weight:600; border-radius:2px; cursor:pointer; transition:all 0.2s; display:block; margin:0 auto 1rem; }
+  .btn-print:hover { background:var(--gold); color:var(--ink); }
+
+  /* ─── MODAL ROL ─── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(26,22,17,0.85); display:flex; align-items:center; justify-content:center; z-index:100; padding:2rem; }
+  .modal-card { background:var(--parchment); border:2px solid var(--gold); border-radius:4px; padding:2.5rem; max-width:560px; width:100%; position:relative; }
+  .modal-card::before { content:''; position:absolute; top:6px; left:6px; right:6px; bottom:6px; border:1px solid var(--gold-light); border-radius:2px; pointer-events:none; }
+  .modal-title { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; text-align:center; margin-bottom:0.5rem; }
+  .modal-sub { text-align:center; color:var(--ink-light); font-style:italic; font-size:0.85rem; margin-bottom:1.5rem; }
+  .rol-options { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
+  .rol-btn { padding:1.2rem; border:2px solid var(--border); border-radius:3px; background:white; cursor:pointer; transition:all 0.2s; text-align:center; font-family:'Source Serif 4',serif; }
+  .rol-btn:hover { border-color:var(--gold); background:var(--parchment); }
+  .rol-btn.selected { border-color:var(--gold); background:var(--parchment-dark); }
+  .rol-btn .rol-icon { font-size:2rem; margin-bottom:0.5rem; }
+  .rol-btn .rol-name { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:var(--ink); }
+  .rol-btn .rol-desc { font-size:0.75rem; color:var(--ink-light); margin-top:0.3rem; }
+  .caso-resumen { background:white; border:1px solid var(--border); border-radius:3px; padding:1rem; margin-bottom:1.5rem; font-size:0.83rem; line-height:1.6; color:var(--ink-mid); }
+  .caso-resumen strong { color:var(--ink); }
+
+  /* ─── TYPING ─── */
+  .typing-indicator { display:flex; gap:4px; padding:0.7rem 1rem; background:var(--ink); border-radius:4px; align-self:flex-start; border-left:3px solid var(--gold); width:fit-content; }
+  .typing-indicator span { width:6px; height:6px; background:var(--gold); border-radius:50%; animation:bounce 1.2s infinite; }
+  .typing-indicator span:nth-child(2) { animation-delay:0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay:0.4s; }
+  @keyframes bounce { 0%,80%,100% { transform:translateY(0); } 40% { transform:translateY(-6px); } }
+
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--parchment-mid); }
+  ::-webkit-scrollbar-thumb { background:var(--gold-light); border-radius:3px; }
+  .hidden { display:none !important; }
+
+  @media print { body { background:white; } .top-bar, .btn-print { display:none; } .informe-content { border:none; } }
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN ════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-card">
+    <div class="bandera"><div></div><div></div><div></div></div>
+    <div class="escudo">⚖️</div>
+    <h1 class="login-title">Simulador Jurídico Colombia</h1>
+    <p class="login-sub">Sistema de práctica jurídica asistida por Inteligencia Artificial</p>
+    <p class="login-pais">🇨🇴 Derecho Colombiano</p>
+
+    <div id="login-alumno-form">
+      <div class="form-group">
+        <label>Nombre del estudiante</label>
+        <input type="text" id="nombre-alumno" placeholder="Nombre y apellidos" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Clave de acceso estudiante</label>
+        <input type="password" id="clave-alumno" placeholder="Clave de acceso">
+      </div>
+      <button class="btn-primary" onclick="loginAlumno()">Acceder al simulador →</button>
+      <button class="btn-secondary" onclick="mostrarLoginProfesor()">Acceso docente / informe</button>
+      <p class="error-msg" id="error-alumno">Clave incorrecta.</p>
+    </div>
+
+    <div id="login-profesor-form" class="hidden">
+      <div class="form-group">
+        <label>Clave de acceso docente</label>
+        <input type="password" id="clave-profesor" placeholder="Clave del docente">
+      </div>
+      <button class="btn-primary" onclick="loginProfesor()">Ver informes →</button>
+      <button class="btn-secondary" onclick="mostrarLoginAlumno()">← Volver</button>
+      <p class="error-msg" id="error-profesor">Clave incorrecta.</p>
+    </div>
+
+    <div class="divider-gold"></div>
+    <p style="font-size:0.72rem; color:var(--ink-light); text-align:center;">
+      Clave estudiante: <strong>derecho2024</strong> · Clave docente: <strong>prof2024</strong>
+    </p>
+  </div>
+</div>
+
+<!-- ════ CASOS ════ -->
+<div id="screen-casos" class="screen">
+  <div class="top-bar">
+    <span class="top-bar-title">⚖️ Aula Jurídica Interactiva — Colombia 🇨🇴</span>
+    <span class="top-bar-user" id="label-alumno-casos"></span>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+  <div style="padding:2rem 2rem 0;">
+    <h2 class="casos-header">Seleccione un expediente</h2>
+    <p class="casos-sub">Derecho colombiano con jurisprudencia de la Corte Suprema de Justicia y la Corte Constitucional</p>
+  </div>
+  <div class="casos-grid" id="casos-grid"></div>
+</div>
+
+<!-- ════ JUICIO ════ -->
+<div id="screen-juicio" class="screen">
+  <div class="top-bar">
+    <span class="top-bar-title" id="juicio-titulo-bar">Audiencia</span>
+    <span class="top-bar-user" id="label-alumno-juicio"></span>
+    <button class="btn-logout" onclick="confirmarSalir()">← Volver</button>
+  </div>
+  <div class="juicio-layout">
+    <div class="expediente-panel" id="expediente-panel"></div>
+    <div class="juicio-main">
+      <div class="fase-bar" id="fase-bar">
+        <span class="fase-step active" data-fase="0">Alegatos iniciales</span>
+        <span class="fase-step" data-fase="1">Pruebas</span>
+        <span class="fase-step" data-fase="2">Testigos</span>
+        <span class="fase-step" data-fase="3">Alegatos finales</span>
+        <span class="fase-step" data-fase="4">Sentencia</span>
+        <span class="score-display" id="score-display">Puntuación: 0 / 40</span>
+      </div>
+      <div class="chat-area" id="chat-area"></div>
+      <div class="input-area" id="input-area">
+        <textarea id="input-txt" placeholder="Redacte su intervención..." onkeydown="teclaInput(event)"></textarea>
+        <button class="btn-fase" id="btn-siguiente-fase" onclick="siguienteFase()" style="display:none;">Siguiente fase →</button>
+        <button class="btn-enviar" id="btn-enviar" onclick="enviarMensaje()">Alegar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ INFORME ════ -->
+<div id="screen-informe" class="screen">
+  <div class="top-bar">
+    <span class="top-bar-title">⚖️ Panel Docente — Colombia 🇨🇴</span>
+    <span></span>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+  <div class="informe-content" id="informe-content">
+    <div class="informe-header">
+      <div style="font-size:2.5rem; margin-bottom:0.5rem;">⚖️🇨🇴</div>
+      <h1 class="informe-titulo">Informe de Evaluación Jurídica</h1>
+      <p class="informe-meta" id="informe-meta"></p>
+    </div>
+    <div id="informe-body"></div>
+    <button class="btn-print" onclick="window.print()">Imprimir / Guardar PDF</button>
+    <button class="btn-secondary" style="max-width:300px; margin:0 auto; display:block;" onclick="logout()">Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- ════ MODAL ROL ════ -->
+<div class="modal-overlay hidden" id="modal-rol">
+  <div class="modal-card">
+    <h2 class="modal-title" id="modal-caso-titulo">Expediente</h2>
+    <p class="modal-sub">Lea el resumen del expediente y elija su rol en la audiencia</p>
+    <div class="caso-resumen" id="modal-caso-desc"></div>
+    <div class="divider-gold"></div>
+    <p style="font-size:0.8rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-light); margin-bottom:0.8rem; text-align:center;">Elija su rol</p>
+    <div class="rol-options">
+      <div class="rol-btn" onclick="seleccionarRol('defensa')" id="btn-rol-defensa">
+        <div class="rol-icon">🛡️</div>
+        <div class="rol-name">Defensa</div>
+        <div class="rol-desc" id="rol-desc-defensa">Apoderado del demandado</div>
+      </div>
+      <div class="rol-btn" onclick="seleccionarRol('acusacion')" id="btn-rol-acusacion">
+        <div class="rol-icon">⚔️</div>
+        <div class="rol-name">Acusación</div>
+        <div class="rol-desc" id="rol-desc-acusacion">Apoderado del demandante</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="iniciarJuicio()" id="btn-iniciar-juicio" disabled>Iniciar audiencia →</button>
+    <button class="btn-secondary" style="margin-top:0.5rem;" onclick="cerrarModal()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+const CLAVE_ALUMNO = 'derecho2024';
+const CLAVE_PROFESOR = 'prof2024';
+const API_URL = '/api/claude';
+const MODEL = 'claude-sonnet-4-20250514';
+
+// ════════════════════════════════════════════
+// CASOS COLOMBIANOS
+// ════════════════════════════════════════════
+const CASOS = [
+  {
+    id: 'caso1',
+    numero: 'Expediente Civil 2847-2023',
+    titulo: 'Responsabilidad civil extracontractual — Accidente de tránsito en Bogotá',
+    tipo: 'Civil',
+    dificultad: 'Fácil',
+    rama: 'Derecho Civil',
+    duracion: '~25 min',
+    desc: 'Una motocicleta invade el carril contrario en la Avenida El Dorado e impacta a un ciclista. El ciclista sufre fractura de tibia y pierde su empleo como mensajero. La aseguradora ofrece una suma inferior a la reclamada. Se debaten los perjuicios materiales y el daño a la vida de relación.',
+    partes: { demandante: 'Sr. Jhon Fredy Vargas Torres (víctima)', demandado: 'Sr. Mauricio Pérez Gómez y Seguros Bolívar S.A.' },
+    rolDefensa: 'Apoderado/a de Seguros Bolívar S.A. (demandada)',
+    rolAcusacion: 'Apoderado/a de Sr. Jhon Fredy Vargas Torres (demandante)',
+    hechos: `
+- El 14 de marzo de 2023 en la Av. El Dorado con Cra. 50, Bogotá.
+- Sr. Pérez conduce motocicleta a exceso de velocidad e invade carril.
+- Impacta a Sr. Vargas quien circulaba en bicicleta correctamente.
+- Sr. Vargas sufre fractura de tibia derecha — incapacidad 120 días.
+- Era mensajero con contrato laboral: salario de $1.800.000/mes.
+- Perdió el empleo durante la incapacidad. Secuela: cojera leve permanente.
+- Cámara de seguridad registró el accidente.
+- Seguros Bolívar ofrece $8.000.000. La reclamación asciende a $45.000.000.`,
+    pruebas: [
+      { id:'P1', label:'Video cámara de seguridad', desc:'Registra la maniobra imprudente de la motocicleta. Propiedad del IDU.' },
+      { id:'P2', label:'Informe médico forense', desc:'Fractura de tibia derecha, 120 días de incapacidad, secuela de cojera leve permanente.' },
+      { id:'P3', label:'Certificación laboral y contrato', desc:'Acredita empleo como mensajero con salario de $1.800.000/mes.' },
+      { id:'P4', label:'Atestado de la Policía de Tránsito', desc:'Imputa el accidente al conductor de la motocicleta por invasión de carril.' },
+      { id:'P5', label:'Dictamen de daños y perjuicios', desc:'Perito: perjuicios materiales $28M + lucro cesante $12M + daño moral $5M = $45M.' },
+    ],
+    testigos: [
+      { nombre:'Sra. Carmen Rosa Ávila', rol:'Testigo presencial del accidente', info:'Vio la maniobra desde el andén. Puede describir la velocidad excesiva.' },
+      { nombre:'Dr. Hernando Ospina', rol:'Médico traumatólogo tratante', info:'Puede certificar la gravedad de las lesiones y las secuelas permanentes.' },
+      { nombre:'Sr. Rodrigo Castillo', rol:'Empleador de la víctima', info:'Confirma el despido por incapacidad prolongada.' },
+    ],
+    jurisprudencia: [
+      { ref:'CSJ SC1872-2022', texto:'La inversión de la carga de la prueba en accidentes de tránsito opera cuando existe actividad peligrosa acreditada, correspondiendo al demandado demostrar causa extraña.' },
+      { ref:'CSJ SC4407-2019', texto:'El daño a la vida de relación comprende las actividades que la víctima no puede realizar por causa del hecho dañoso, y es indemnizable autónomamente del daño moral.' },
+      { ref:'Corte Constitucional T-458-2018', texto:'El lucro cesante debe calcularse incluyendo las proyecciones salariales futuras, especialmente cuando la víctima pierde capacidad laboral permanente.' },
+      { ref:'Art. 2341 Código Civil colombiano', texto:'El que ha cometido un delito o culpa, que ha inferido daño a otro, está obligado a la indemnización.' },
+    ],
+    doctrina: 'Tamayo Jaramillo sostiene que en actividades peligrosas como la conducción de vehículos, la responsabilidad es objetiva y solo se exonera por causa extraña. Henao distingue entre perjuicios materiales (daño emergente y lucro cesante) y extrapatrimoniales (daño moral y daño a la vida de relación), siendo todos plenamente indemnizables en el derecho colombiano.',
+  },
+  {
+    id: 'caso2',
+    numero: 'Expediente Civil 1134-2023',
+    titulo: 'Proceso de pertenencia — Prescripción adquisitiva de dominio en zona rural',
+    tipo: 'Civil',
+    dificultad: 'Medio',
+    rama: 'Derecho Civil — Bienes',
+    duracion: '~35 min',
+    desc: 'Una familia campesina lleva 22 años habitando y cultivando un predio rural en el Tolima sin título de propiedad. El heredero del propietario original aparece reclamando el inmueble. La familia solicita declarar la prescripción adquisitiva extraordinaria. En juego: 8 hectáreas avaluadas en $320.000.000.',
+    partes: { demandante: 'Familia Morales Quintero (poseedores)', demandado: 'Sr. Alejandro Fuentes Herrera (heredero propietario)' },
+    rolDefensa: 'Apoderado/a de Sr. Alejandro Fuentes (demandado propietario)',
+    rolAcusacion: 'Apoderado/a de familia Morales Quintero (demandante poseedora)',
+    hechos: `
+- Desde 2001, la familia Morales habita y cultiva el predio "La Esperanza" en el Tolima.
+- Han realizado mejoras: casa de habitación, pozo, cultivos de café y plátano.
+- Pagan servicios públicos e impuesto predial desde 2005.
+- El propietario original, Sr. Fuentes padre, nunca se opuso ni perturbó la posesión.
+- En 2023 fallece el propietario y su hijo Alejandro exige la restitución.
+- No existe contrato de arrendamiento ni comodato que explique la tenencia.
+- El predio no tiene título registrado en Instrumentos Públicos a favor de la familia.`,
+    pruebas: [
+      { id:'P1', label:'Certificado de tradición y libertad', desc:'Acredita que el predio está registrado a nombre de la sucesión Fuentes. Sin afectaciones.' },
+      { id:'P2', label:'Recibos de servicios y predial', desc:'Pagos a nombre de la familia Morales desde 2005. Acreditan posesión pública.' },
+      { id:'P3', label:'Declaraciones extrajuicio de vecinos', desc:'Cinco vecinos certifican que la familia Morales habita el predio desde 2001.' },
+      { id:'P4', label:'Fotos y registro IGAC', desc:'Imágenes satelitales del IGAC muestran construcciones y cultivos desde 2003.' },
+      { id:'P5', label:'Acta de inspección judicial', desc:'El juez constata in situ la ocupación actual, mejoras y cultivos.' },
+    ],
+    testigos: [
+      { nombre:'Sr. Efraín González Lara', rol:'Vecino colindante desde 1998', info:'Conoce la llegada de la familia Morales al predio en 2001 y su posesión ininterrumpida.' },
+      { nombre:'Sra. Amparo de Fuentes', rol:'Esposa del propietario fallecido', info:'Puede aclarar si hubo algún acuerdo verbal con la familia Morales.' },
+      { nombre:'Sr. Carlos Morales', rol:'Hijo mayor de la familia poseedora', info:'Nació en el predio. Puede declarar sobre la posesión material y las mejoras.' },
+    ],
+    jurisprudencia: [
+      { ref:'CSJ SC-018-2021', texto:'Para la prescripción adquisitiva extraordinaria basta acreditar posesión material pública, pacífica e ininterrumpida por 10 años, sin necesidad de justo título ni buena fe.' },
+      { ref:'CSJ SC4321-2019', texto:'El pago de impuestos prediales es indicio grave de ánimo de señor y dueño, elemento esencial del corpus possessionis requerido para la prescripción.' },
+      { ref:'Corte Constitucional C-383-2000', texto:'La prescripción adquisitiva protege constitucionalmente la función social de la propiedad cuando quien ocupa el bien lo trabaja productivamente.' },
+      { ref:'Art. 2532 Código Civil colombiano', texto:'El dominio de cosas comerciales que no ha sido adquirido por prescripción ordinaria, puede serlo por la extraordinaria, bajo las reglas establecidas.' },
+    ],
+    doctrina: 'Velásquez Jaramillo distingue entre la prescripción ordinaria (10 años con justo título y buena fe) y la extraordinaria (20 años sin necesidad de título). La doctrina colombiana mayoritaria (Ospina Fernández) considera que el ánimo de señor y dueño puede presumirse de los actos materiales sobre el bien cuando no existe contrato que explique la tenencia.',
+  },
+  {
+    id: 'caso3',
+    numero: 'Radicado Penal 2024-00847',
+    titulo: 'Homicidio agravado — Sicariato en Medellín',
+    tipo: 'Penal',
+    dificultad: 'Difícil',
+    rama: 'Derecho Penal',
+    duracion: '~45 min',
+    desc: 'Un comerciante del barrio Boston en Medellín es asesinado a tiros desde una motocicleta. La Fiscalía imputa a dos personas: el presunto autor material (sicario) y el presunto determinador (quien supuestamente contrató el crimen). El caso tiene un testigo protegido, interceptaciones telefónicas y el debate sobre la autoría mediata.',
+    partes: { demandante: 'Fiscalía General de la Nación', demandado: 'Andrés Felipe Cano (imputado determinador) y alias "El Tigre" (autor material)' },
+    rolDefensa: 'Defensor/a de Andrés Felipe Cano (presunto determinador)',
+    rolAcusacion: 'Fiscal del caso — Fiscalía General de la Nación',
+    hechos: `
+- El 8 de febrero de 2024, Sr. Ricardo Mejía Ossa es asesinado frente a su negocio.
+- Dos hombres en motocicleta disparan 9 proyectiles. Fallece en el lugar.
+- La víctima tenía una disputa comercial con Andrés Felipe Cano por deudas.
+- Interceptaciones telefónicas capturan llamadas entre Cano y alias "El Tigre".
+- Un testigo protegido (clave: "Girasol") afirma haber escuchado a Cano ordenar el crimen.
+- Cano alega que las llamadas son por negocios legítimos y niega conocer a "El Tigre" como sicario.
+- "El Tigre" fue capturado en flagrancia con el arma homicida. Acepta cargos como autor material.
+- No hay evidencia física directa que vincule a Cano con el lugar del crimen.`,
+    pruebas: [
+      { id:'P1', label:'Interceptaciones telefónicas', desc:'Llamadas entre Cano y "El Tigre" días antes del crimen. Menciones crípticas a "resolver el problema".' },
+      { id:'P2', label:'Declaración testigo protegido "Girasol"', desc:'Afirma haber escuchado a Cano decir "hay que callar a Mejía". Identidad reservada.' },
+      { id:'P3', label:'Informe de balística', desc:'Arma recuperada de "El Tigre" coincide con proyectiles extraídos del cuerpo.' },
+      { id:'P4', label:'Registros financieros de Cano', desc:'Transferencia de $15.000.000 a cuenta de testaferro dos días antes del homicidio.' },
+      { id:'P5', label:'Video vigilancia del barrio', desc:'Muestra la motocicleta pero las placas son falsas. No identifica a los ocupantes.' },
+    ],
+    testigos: [
+      { nombre:'Testigo protegido "Girasol"', rol:'Informante — identidad reservada', info:'Única prueba directa contra Cano. Su credibilidad es el núcleo del debate.' },
+      { nombre:'Investigador CTI Dr. Ramírez', rol:'Investigador de la Fiscalía', info:'Explica las interceptaciones y el análisis de llamadas.' },
+      { nombre:'Dra. Claudia Restrepo', rol:'Perita en análisis financiero forense', info:'Explica las transferencias sospechosas de Cano.' },
+    ],
+    jurisprudencia: [
+      { ref:'CSJ SP2430-2022', texto:'El determinador responde como coautor cuando su intervención en el designio criminal es determinante, aun sin presencia física en el lugar del crimen.' },
+      { ref:'CSJ SP4792-2020', texto:'Las interceptaciones telefónicas con contenido críptico o ambiguo deben interpretarse en conjunto con los demás medios probatorios y no de forma aislada.' },
+      { ref:'Corte Constitucional C-144-2010', texto:'El testimonio del testigo protegido tiene pleno valor probatorio, pero el juez debe evaluar cuidadosamente su credibilidad y los móviles que pudo tener para declarar.' },
+      { ref:'Art. 103 y 104 Código Penal colombiano', texto:'El homicidio agravado (circunstancia: precio o promesa remuneratoria — sicariato) tiene pena de 25 a 40 años de prisión.' },
+    ],
+    doctrina: 'Velásquez Velásquez sostiene que la autoría mediata por dominio de la voluntad es diferente de la determinación: en el sicariato el determinador no domina al ejecutor — este actúa libremente —, por lo que es determinador y no autor mediato. Fernández Carrasquilla distingue entre prueba indiciaria suficiente y mera sospecha, señalando que en materia penal la duda razonable siempre favorece al procesado.',
+  },
+  {
+    id: 'caso4',
+    numero: 'Expediente JR-2023-0156',
+    titulo: 'Justicia Restaurativa — Lesiones personales y reconciliación comunitaria',
+    tipo: 'Restaurativa',
+    dificultad: 'Medio',
+    rama: 'Justicia Restaurativa',
+    duracion: '~35 min',
+    desc: 'En una vereda del Cauca, una pelea entre vecinos deja a un hombre con lesiones graves. El agresor reconoce los hechos. La comunidad, el facilitador y las familias buscan un acuerdo restaurativo que repare el daño, evite la cárcel y reconstruya la convivencia. Un caso único que trabaja la conciliación, la reparación y el tejido social.',
+    partes: { demandante: 'Sr. Bernardo Polanco (víctima) y su familia', demandado: 'Sr. Norberto Castaño (ofensor reconocido)' },
+    rolDefensa: 'Facilitador/a restaurativo — representa el interés de la comunidad',
+    rolAcusacion: 'Apoderado/a de la víctima Sr. Bernardo Polanco',
+    hechos: `
+- El 3 de septiembre de 2023, disputa por linderos en vereda El Carmelo, Cauca.
+- Sr. Castaño golpea con un machete a Sr. Polanco causando herida en brazo derecho.
+- Sr. Polanco pierde parcialmente la movilidad del brazo — incapacidad permanente del 30%.
+- Sr. Castaño admite los hechos y expresa arrepentimiento genuino.
+- Ambas familias llevan 15 años como vecinos. Existe deuda histórica de un conflicto anterior.
+- La comunidad solicita solución restaurativa para evitar escalada del conflicto.
+- El Ministerio Público acompaña el proceso de justicia restaurativa.
+- Sr. Polanco desea reparación económica y garantía de no repetición.`,
+    pruebas: [
+      { id:'P1', label:'Historia clínica y dictamen médico', desc:'Incapacidad permanente del 30% en brazo derecho. Requiere fisioterapia por 18 meses.' },
+      { id:'P2', label:'Acta de reconocimiento de hechos', desc:'Sr. Castaño reconoce voluntariamente su responsabilidad ante el facilitador.' },
+      { id:'P3', label:'Informe sociofamiliar', desc:'Trabajadora social: ambas familias conviven en comunidad de 40 personas. Ruptura afecta toda la vereda.' },
+      { id:'P4', label:'Valoración de daños y perjuicios', desc:'Daño emergente $8M + lucro cesante $12M + daño moral $6M = $26M estimados.' },
+      { id:'P5', label:'Acta de asamblea comunitaria', desc:'La comunidad solicita proceso restaurativo y se ofrece como garante del cumplimiento.' },
+    ],
+    testigos: [
+      { nombre:'Doña Rosario Castaño', rol:'Esposa del ofensor', info:'Conoce la situación económica real de la familia. Puede hablar de la voluntad de reparar.' },
+      { nombre:'Don Elías Mosquera', rol:'Líder comunitario de la vereda', info:'Puede explicar el contexto histórico del conflicto y la importancia de la solución restaurativa.' },
+      { nombre:'Dra. Luisa Fernanda Pardo', rol:'Psicóloga — perita en justicia restaurativa', info:'Explica el impacto del daño en la víctima y el proceso de reparación simbólica y material.' },
+    ],
+    jurisprudencia: [
+      { ref:'Corte Constitucional C-516-2015', texto:'La justicia restaurativa no es un mecanismo de impunidad sino un sistema que privilegia la reparación integral de la víctima, la responsabilidad del ofensor y la reconciliación comunitaria.' },
+      { ref:'CSJ SP-2019-3847', texto:'El acuerdo restaurativo debidamente suscrito tiene efectos jurídicos vinculantes y puede dar lugar a la suspensión condicional de la ejecución de la pena.' },
+      { ref:'Ley 906 de 2004, Art. 518-527', texto:'El programa de justicia restaurativa puede aplicarse en cualquier fase del proceso penal. Requiere consentimiento libre de víctima y ofensor, reconocimiento de responsabilidad y acuerdo reparatorio.' },
+      { ref:'Corte Constitucional T-234-2019', texto:'El Estado tiene la obligación de garantizar a las víctimas no solo la reparación económica sino también la reparación simbólica, la verdad y las garantías de no repetición.' },
+    ],
+    doctrina: 'Uprimny Yepes señala que la justicia restaurativa representa un paradigma diferente al retributivo: no busca el castigo sino la sanación del daño. Guerrero Peralta distingue tres pilares: reparación a la víctima (material y simbólica), responsabilidad del ofensor (más allá de la sanción) y restauración del tejido social. La doctrina colombiana contemporánea ve en la justicia restaurativa una respuesta más eficaz que la prisión para delitos de mediana gravedad con ofensor conocido.',
+  },
+];
+
+// ════════════════════════════════════════════
+// ESTADO
+// ════════════════════════════════════════════
+let estado = {
+  alumno:'', casoActual:null, rolAlumno:null, faseActual:0,
+  historialChat:[], puntuaciones:[0,0,0,0,0], transcripcion:[],
+  juicioIniciado:false, esperandoIA:false
+};
+
+const FASES = ['Alegatos iniciales','Pruebas','Testigos','Alegatos finales','Sentencia'];
+
+// ════════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════════
+function mostrarLoginProfesor() {
+  document.getElementById('login-alumno-form').classList.add('hidden');
+  document.getElementById('login-profesor-form').classList.remove('hidden');
+}
+function mostrarLoginAlumno() {
+  document.getElementById('login-profesor-form').classList.add('hidden');
+  document.getElementById('login-alumno-form').classList.remove('hidden');
+}
+function loginAlumno() {
+  const nombre = document.getElementById('nombre-alumno').value.trim();
+  const clave = document.getElementById('clave-alumno').value;
+  if (!nombre) { mostrarError('error-alumno','Ingrese su nombre completo.'); return; }
+  if (clave !== CLAVE_ALUMNO) { mostrarError('error-alumno','Clave incorrecta.'); return; }
+  estado.alumno = nombre;
+  mostrarPantalla('casos');
+  renderizarCasos();
+}
+function loginProfesor() {
+  const clave = document.getElementById('clave-profesor').value;
+  if (clave !== CLAVE_PROFESOR) { mostrarError('error-profesor','Clave incorrecta.'); return; }
+  mostrarPantalla('informe');
+  generarInforme();
+}
+function mostrarError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(()=>el.style.display='none', 3000);
+}
+function logout() {
+  estado = { alumno:'', casoActual:null, rolAlumno:null, faseActual:0, historialChat:[], puntuaciones:[0,0,0,0,0], transcripcion:[], juicioIniciado:false, esperandoIA:false };
+  document.getElementById('nombre-alumno').value='';
+  document.getElementById('clave-alumno').value='';
+  document.getElementById('clave-profesor').value='';
+  mostrarLoginAlumno();
+  mostrarPantalla('login');
+}
+function mostrarPantalla(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+// ════════════════════════════════════════════
+// CASOS
+// ════════════════════════════════════════════
+function renderizarCasos() {
+  document.getElementById('label-alumno-casos').textContent = 'Estudiante: '+estado.alumno;
+  const grid = document.getElementById('casos-grid');
+  grid.innerHTML = CASOS.map(c => `
+    <div class="caso-card" onclick="abrirModalRol('${c.id}')">
+      <div><span class="caso-badge badge-${c.tipo.toLowerCase()}">${c.tipo} · ${c.dificultad}</span></div>
+      <div class="caso-numero">${c.numero}</div>
+      <div class="caso-titulo">${c.titulo}</div>
+      <div class="caso-desc">${c.desc}</div>
+      <div class="caso-meta"><span>⚖️ ${c.rama}</span><span>⏱ ${c.duracion}</span></div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════
+// MODAL ROL
+// ════════════════════════════════════════════
+function abrirModalRol(casoId) {
+  const caso = CASOS.find(c=>c.id===casoId);
+  estado.casoActual = caso;
+  estado.rolAlumno = null;
+  document.getElementById('modal-caso-titulo').textContent = caso.titulo;
+  document.getElementById('modal-caso-desc').innerHTML = `
+    <strong>${caso.numero}</strong><br>
+    <strong>Demandante/Fiscalía:</strong> ${caso.partes.demandante}<br>
+    <strong>Demandado/Imputado:</strong> ${caso.partes.demandado}<br><br>
+    ${caso.desc}`;
+  document.getElementById('rol-desc-defensa').textContent = caso.rolDefensa;
+  document.getElementById('rol-desc-acusacion').textContent = caso.rolAcusacion;
+  document.getElementById('btn-rol-defensa').classList.remove('selected');
+  document.getElementById('btn-rol-acusacion').classList.remove('selected');
+  document.getElementById('btn-iniciar-juicio').disabled = true;
+  document.getElementById('modal-rol').classList.remove('hidden');
+}
+function seleccionarRol(rol) {
+  estado.rolAlumno = rol;
+  document.getElementById('btn-rol-defensa').classList.toggle('selected', rol==='defensa');
+  document.getElementById('btn-rol-acusacion').classList.toggle('selected', rol==='acusacion');
+  document.getElementById('btn-iniciar-juicio').disabled = false;
+}
+function cerrarModal() { document.getElementById('modal-rol').classList.add('hidden'); }
+function confirmarSalir() { if (confirm('¿Desea abandonar la audiencia actual?')) { cerrarJuicio(); } }
+function cerrarJuicio() { mostrarPantalla('casos'); }
+
+// ════════════════════════════════════════════
+// JUICIO
+// ════════════════════════════════════════════
+async function iniciarJuicio() {
+  cerrarModal();
+  const caso = estado.casoActual;
+  estado.historialChat = [];
+  estado.puntuaciones = [0,0,0,0,0];
+  estado.faseActual = 0;
+  estado.transcripcion = [];
+  estado.juicioIniciado = true;
+
+  document.getElementById('label-alumno-juicio').textContent = estado.alumno+' · '+(estado.rolAlumno==='defensa'?'🛡️ Defensa':'⚔️ Acusación');
+  document.getElementById('juicio-titulo-bar').textContent = caso.titulo;
+  renderizarExpediente();
+  renderizarFases();
+  document.getElementById('chat-area').innerHTML = '';
+  document.getElementById('score-display').textContent = 'Puntuación: 0 / 40';
+  document.getElementById('btn-siguiente-fase').style.display = 'none';
+  document.getElementById('input-txt').value = '';
+  document.getElementById('btn-enviar').disabled = false;
+  mostrarPantalla('juicio');
+
+  agregarIndicadorTyping();
+  const resp = await llamarAPI([{ role:'user', content:'Inicia la audiencia. Preséntate como juez/despacho, lee el asunto brevemente con terminología jurídica colombiana (señor juez, despacho, apoderado, etc.) y da la palabra para los alegatos iniciales.' }], true);
+  quitarIndicadorTyping();
+  agregarMensaje('juez', resp);
+  estado.historialChat.push({ role:'assistant', content:resp });
+  agregarTranscripcion('DESPACHO', resp);
+  agregarMensajeSistema('Fase 1 de 5: Alegatos iniciales — Redacte su intervención');
+}
+
+function renderizarExpediente() {
+  const caso = estado.casoActual;
+  document.getElementById('expediente-panel').innerHTML = `
+    <div class="exp-section">
+      <div class="exp-title">📁 Expediente</div>
+      <div class="exp-body">
+        <strong>${caso.numero}</strong><br>
+        <strong>Demandante:</strong> ${caso.partes.demandante}<br>
+        <strong>Demandado:</strong> ${caso.partes.demandado}
+      </div>
+    </div>
+    <div class="exp-section">
+      <div class="exp-title">📋 Hechos relevantes</div>
+      <div class="exp-body">${caso.hechos.trim().replace(/\n/g,'<br>')}</div>
+    </div>
+    <div class="exp-section">
+      <div class="exp-title">🗂 Medios de prueba</div>
+      ${caso.pruebas.map(p=>`<div class="prueba-item" onclick="alert('${p.label}\\n\\n${p.desc}')"><div class="prueba-label">${p.id}: ${p.label}</div><div style="font-size:0.72rem;margin-top:2px;">${p.desc}</div></div>`).join('')}
+    </div>
+    <div class="exp-section">
+      <div class="exp-title">👥 Testigos</div>
+      <div class="exp-body">${caso.testigos.map(t=>`<strong>${t.nombre}</strong> — ${t.rol}<br><span style="font-size:0.75rem;font-style:italic;">${t.info}</span><br><br>`).join('')}</div>
+    </div>
+    <div class="exp-section">
+      <div class="exp-title">📚 Jurisprudencia</div>
+      ${caso.jurisprudencia.map(j=>`<div class="jurisprudencia-item"><div class="juris-ref">${j.ref}</div>${j.texto}</div>`).join('')}
+    </div>
+    <div class="exp-section">
+      <div class="exp-title">📖 Doctrina</div>
+      <div class="exp-body" style="font-style:italic;">${caso.doctrina}</div>
+    </div>`;
+}
+
+function renderizarFases() {
+  document.querySelectorAll('.fase-step').forEach((s,i)=>{
+    s.classList.remove('active','done');
+    if (i<estado.faseActual) s.classList.add('done');
+    else if (i===estado.faseActual) s.classList.add('active');
+  });
+}
+
+async function siguienteFase() {
+  if (estado.faseActual>=4) return;
+  estado.faseActual++;
+  renderizarFases();
+  document.getElementById('btn-siguiente-fase').style.display='none';
+  document.getElementById('btn-enviar').disabled=false;
+  document.getElementById('input-txt').disabled=false;
+  const instrucciones = ['','Inicia la FASE DE PRUEBAS. Indica al apoderado que puede presentar y controvertir las pruebas del expediente.','Inicia el INTERROGATORIO DE TESTIGOS. Presenta los testigos disponibles.','Inicia los ALEGATOS FINALES. Pide al apoderado su alegato de conclusión.',''];
+  if (instrucciones[estado.faseActual]) {
+    agregarIndicadorTyping();
+    estado.historialChat.push({ role:'user', content:`[CAMBIO DE FASE: ${FASES[estado.faseActual]}] ${instrucciones[estado.faseActual]}` });
+    const resp = await llamarAPI(estado.historialChat, false);
+    quitarIndicadorTyping();
+    agregarMensaje('juez', resp);
+    estado.historialChat.push({ role:'assistant', content:resp });
+    agregarTranscripcion('DESPACHO', resp);
+    agregarMensajeSistema(`Fase ${estado.faseActual+1} de 5: ${FASES[estado.faseActual]}`);
+  }
+}
+
+// ════════════════════════════════════════════
+// CHAT
+// ════════════════════════════════════════════
+function teclaInput(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarMensaje();} }
+
+async function enviarMensaje() {
+  const txt = document.getElementById('input-txt').value.trim();
+  if (!txt||estado.esperandoIA) return;
+  document.getElementById('input-txt').value='';
+  agregarMensaje('alumno', txt);
+  agregarTranscripcion('APODERADO', txt);
+  estado.historialChat.push({ role:'user', content:txt });
+  estado.esperandoIA=true;
+  document.getElementById('btn-enviar').disabled=true;
+  agregarIndicadorTyping();
+  const respuesta = await llamarAPI(estado.historialChat, false);
+  quitarIndicadorTyping();
+  const partes = parsearRespuesta(respuesta);
+  if (partes.juez) { agregarMensaje('juez',partes.juez); agregarTranscripcion('DESPACHO',partes.juez); estado.historialChat.push({role:'assistant',content:partes.juez}); }
+  if (partes.contraria) setTimeout(()=>{ agregarMensaje('contraria',partes.contraria); agregarTranscripcion('APODERADO CONTRARIO',partes.contraria); },500);
+  if (partes.evaluacion) setTimeout(()=>{ agregarMensajeEvaluacion(partes.evaluacion,partes.puntos); if(partes.puntos){estado.puntuaciones[estado.faseActual]+=partes.puntos;actualizarPuntuacion();} },1000);
+  if (estado.faseActual===4) { document.getElementById('input-txt').disabled=true; document.getElementById('btn-enviar').disabled=true; guardarSesion(); }
+  else { document.getElementById('btn-siguiente-fase').style.display='block'; document.getElementById('btn-enviar').disabled=false; }
+  estado.esperandoIA=false;
+}
+
+function parsearRespuesta(texto) {
+  const result = { juez:'', contraria:'', evaluacion:'', puntos:0 };
+  const mJuez = texto.match(/\[DESPACHO\]([\s\S]*?)(?=\[|$)/i) || texto.match(/\[JUEZ\]([\s\S]*?)(?=\[|$)/i);
+  const mContraria = texto.match(/\[APODERADO CONTRARIO\]([\s\S]*?)(?=\[|$)/i) || texto.match(/\[PARTE CONTRARIA\]([\s\S]*?)(?=\[|$)/i);
+  const mEval = texto.match(/\[EVALUACIÓN\]([\s\S]*?)(?=\[|$)/i);
+  const mPuntos = texto.match(/\[PUNTOS:\s*(\d+)\]/i);
+  if (mJuez) result.juez = mJuez[1].trim();
+  if (mContraria) result.contraria = mContraria[1].trim();
+  if (mEval) result.evaluacion = mEval[1].trim();
+  if (mPuntos) result.puntos = parseInt(mPuntos[1]);
+  if (!result.juez&&!result.contraria&&!result.evaluacion) result.juez = texto;
+  return result;
+}
+
+function actualizarPuntuacion() {
+  const total = estado.puntuaciones.reduce((a,b)=>a+b,0);
+  document.getElementById('score-display').textContent = `Puntuación: ${total} / 40`;
+}
+
+function agregarMensaje(tipo, texto) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg msg-'+tipo;
+  const roles = { juez:'⚖️ Honorable Despacho', contraria:'⚔️ Apoderado/a de la parte contraria', alumno:'🎓 Su intervención — '+estado.alumno };
+  div.innerHTML = `<div class="msg-role">${roles[tipo]||'Sistema'}</div>${formatearTexto(texto)}`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function agregarMensajeEvaluacion(texto, puntos) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg msg-evaluacion';
+  div.innerHTML = `<div class="msg-role">📊 Valoración del Despacho ${puntos?`<span class="puntuacion-inline">+${puntos} pts</span>`:''}</div>${formatearTexto(texto)}`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  agregarTranscripcion('EVALUACIÓN', texto+(puntos?` [+${puntos} puntos]`:''));
+}
+
+function agregarMensajeSistema(texto) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg-sistema'; div.textContent = texto;
+  area.appendChild(div); area.scrollTop = area.scrollHeight;
+}
+
+function agregarIndicadorTyping() {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.id='typing-indicator'; div.className='typing-indicator';
+  div.innerHTML='<span></span><span></span><span></span>';
+  area.appendChild(div); area.scrollTop = area.scrollHeight;
+}
+
+function quitarIndicadorTyping() { const el=document.getElementById('typing-indicator'); if(el)el.remove(); }
+function formatearTexto(txt) { return txt.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>'); }
+
+function agregarTranscripcion(rol, texto) {
+  estado.transcripcion.push({ rol, texto, timestamp:new Date().toLocaleTimeString('es-CO'), fase:FASES[estado.faseActual]||'Sentencia' });
+}
+
+function guardarSesion() {
+  const sesiones = JSON.parse(localStorage.getItem('sesiones_juicio_col')||'[]');
+  sesiones.push({
+    alumno:estado.alumno, caso:estado.casoActual.titulo, casoNumero:estado.casoActual.numero,
+    tipo:estado.casoActual.tipo, rol:estado.rolAlumno,
+    fecha:new Date().toLocaleString('es-CO'),
+    puntuaciones:estado.puntuaciones,
+    totalPuntos:estado.puntuaciones.reduce((a,b)=>a+b,0),
+    transcripcion:estado.transcripcion,
+  });
+  localStorage.setItem('sesiones_juicio_col', JSON.stringify(sesiones));
+}
+
+// ════════════════════════════════════════════
+// API
+// ════════════════════════════════════════════
+function construirSystemPrompt() {
+  const caso = estado.casoActual;
+  const rol = estado.rolAlumno;
+  const rolTexto = rol==='defensa'?caso.rolDefensa:caso.rolAcusacion;
+  const rolContrario = rol==='defensa'?caso.rolAcusacion:caso.rolDefensa;
+  const esRestaurativa = caso.tipo==='Restaurativa';
+
+  return `Eres el sistema de simulación de una audiencia judicial colombiana real. Actúas simultáneamente como:
+1. EL DESPACHO (juez): diriges la audiencia con terminología jurídica colombiana, valoras argumentos, mantienes el orden.
+2. EL APODERADO CONTRARIO: argumentas con rigor jurídico colombiano, citas jurisprudencia de la CSJ y la Corte Constitucional.
+
+EXPEDIENTE: ${caso.numero}
+CASO: ${caso.titulo}
+TIPO: ${caso.tipo}
+DEMANDANTE/FISCALÍA: ${caso.partes.demandante}
+DEMANDADO/IMPUTADO: ${caso.partes.demandado}
+
+HECHOS:
+${caso.hechos}
+
+JURISPRUDENCIA APLICABLE:
+${caso.jurisprudencia.map(j=>`- ${j.ref}: ${j.texto}`).join('\n')}
+
+DOCTRINA: ${caso.doctrina}
+
+ROL DEL ESTUDIANTE: ${rolTexto}
+ROL QUE TÚ INTERPRETAS (contraparte): ${rolContrario}
+
+${esRestaurativa ? `CONTEXTO ESPECIAL — JUSTICIA RESTAURATIVA:
+Este no es un proceso adversarial ordinario. Es un círculo restaurativo. El despacho actúa como facilitador, no como juez sancionador. El objetivo es la reparación integral, la verdad y la reconciliación. Las intervenciones deben promover el diálogo, la empatía y el acuerdo. El "apoderado contrario" en este caso representa los intereses de la comunidad y busca equilibrio, no victoria.` : ''}
+
+TERMINOLOGÍA COLOMBIANA OBLIGATORIA:
+- "Despacho" o "Honorable Despacho" (no "Señoría")
+- "Apoderado" (no "letrado")
+- "Audiencia" (no "juicio" o "vista")
+- "Fiscalía" / "procesado" en materia penal
+- "CSJ" para la Corte Suprema de Justicia
+- "Corte Constitucional" para control constitucional
+- Código General del Proceso (CGP) en lo civil
+- Ley 906 de 2004 (CPP) en lo penal
+
+INSTRUCCIONES:
+- Usa SIEMPRE estas etiquetas:
+  [DESPACHO] ... intervención del despacho/facilitador ...
+  [APODERADO CONTRARIO] ... argumentos de la contraparte ...
+  [EVALUACIÓN] ... evaluación jurídica de la intervención del estudiante ...
+  [PUNTOS: N] donde N es 0-8 según calidad jurídica
+- Cita siempre jurisprudencia específica del expediente
+- En la sentencia final: falla con fundamentos de derecho colombiano, evalúa el desempeño global
+- Nunca salgas del rol. Todo en ESPAÑOL colombiano.`;
+}
+
+async function llamarAPI(mensajes, esInicio) {
+  try {
+    const sysPrompt = construirSystemPrompt();
+    const cleanMsgs = mensajes.map(m=>({ role:m.role||'user', content:m.content })).filter(m=>m.content);
+    const response = await fetch(API_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body:JSON.stringify({ model:MODEL, max_tokens:1000, system:sysPrompt, messages:cleanMsgs })
+    });
+    if (!response.ok) { const err=await response.json(); return `[Error: ${err.error?.message||'API no disponible'}]`; }
+    const data = await response.json();
+    return data.content?.[0]?.text||'[Sin respuesta]';
+  } catch(e) { return `[Error: ${e.message}]`; }
+}
+
+// ════════════════════════════════════════════
+// INFORME
+// ════════════════════════════════════════════
+function generarInforme() {
+  const sesiones = JSON.parse(localStorage.getItem('sesiones_juicio_col')||'[]');
+  document.getElementById('informe-meta').textContent = `Generado el ${new Date().toLocaleString('es-CO')} · ${sesiones.length} sesión(es) registrada(s)`;
+  const body = document.getElementById('informe-body');
+  if (!sesiones.length) { body.innerHTML='<p style="color:var(--ink-light);font-style:italic;text-align:center;padding:2rem;">No hay sesiones registradas aún.</p>'; return; }
+  body.innerHTML = sesiones.map((s,idx)=>{
+    const total = s.puntuaciones.reduce((a,b)=>a+b,0);
+    const nota = Math.round((total/40)*10*10)/10;
+    const cal = nota>=9?'Sobresaliente':nota>=7?'Notable':nota>=5?'Aprobado':'Reprobado';
+    const col = nota>=7?'var(--green-law)':nota>=5?'#7A5A00':'var(--red-col)';
+    return `<div class="informe-section" style="border:1.5px solid var(--border);border-radius:4px;padding:1.5rem;margin-bottom:2rem;">
+      <div class="informe-section-title">Sesión ${idx+1} — ${s.fecha}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+        <div><div style="font-size:0.75rem;color:var(--ink-light);text-transform:uppercase;font-weight:600;">Estudiante</div><div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;">${s.alumno}</div></div>
+        <div><div style="font-size:0.75rem;color:var(--ink-light);text-transform:uppercase;font-weight:600;">Rol</div><div style="font-weight:600;">${s.rol==='defensa'?'🛡️ Defensa':'⚔️ Acusación'}</div></div>
+        <div style="grid-column:1/-1;"><div style="font-size:0.75rem;color:var(--ink-light);text-transform:uppercase;font-weight:600;">Expediente</div><div style="font-weight:600;">${s.casoNumero}: ${s.caso}</div></div>
+      </div>
+      <div class="score-grid">
+        ${FASES.map((f,i)=>`<div class="score-card"><div class="label">${f}</div><div class="value">${s.puntuaciones[i]||0}<span class="max">/8</span></div></div>`).join('')}
+        <div class="score-card" style="background:var(--ink);border-color:var(--gold);"><div class="label" style="color:var(--gold-light);">Total</div><div class="value" style="color:var(--gold);">${total}<span class="max" style="color:var(--gold-light);">/40</span></div></div>
+      </div>
+      <div style="text-align:center;padding:1rem;background:var(--parchment);border-radius:3px;margin:1rem 0;">
+        <span style="font-size:0.75rem;color:var(--ink-light);text-transform:uppercase;letter-spacing:0.1em;">Nota estimada</span>
+        <div style="font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:700;color:${col};">${nota}</div>
+        <div style="font-weight:600;color:${col};">${cal}</div>
+      </div>
+      <div class="informe-section-title" style="margin-top:1.5rem;">Transcripción</div>
+      <div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:3px;padding:0.8rem;">
+        ${s.transcripcion.map(t=>`<div class="transcript-item"><span class="role-tag">[${t.rol}]</span><span style="font-size:0.7rem;color:var(--ink-light);">${t.timestamp} · ${t.fase}</span><br>${t.texto.substring(0,300)}${t.texto.length>300?'...':''}</div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
